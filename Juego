@@ -1,0 +1,146 @@
+import cc.arduino.*;
+import processing.serial.*; 
+
+Arduino arduino;
+Serial puerto;
+
+String pregunta = "", respuesta = "",posiX = "",posiY = "";
+StringList preguntas,respuestas,posX,posY;
+StringList rT = new StringList("", "", "", "");
+
+int heroeX=775,villanoX=1035;
+int heroeY=650,villanoY=650;
+int cambioY= 162;
+int velHeroe = 0;
+
+PImage inicio;
+PImage bg,heroe,villano;
+boolean IntroScreen = true;
+boolean vCounter = false;
+
+void setup() {
+  puerto = new Serial(this,"/dev/tty.usbmodem68", 9600);
+  size(1200, 800);
+  inicio=loadImage("Minions3.jpg");
+  image(inicio,0,0,1200,800);
+  preguntas = new StringList("5+5","10-3","6+7","3+5","8-2","12-5+2","11+4-1","9+6-3","20-10+8","15+2+7","30-15-9","1+2+3");
+  respuestas = new StringList("10","7","13","8","6","9","14","12","18","24","6","6");
+  posX = new StringList("230","160","485","485, 655");
+  posY = new StringList("160","655","420","485, 655");
+  bg=loadImage("fondo.jpg");
+  heroe=loadImage("minion.fw.png");
+  villano=loadImage("villano.fw.png");
+  puerto.bufferUntil('\n');
+  smooth();
+}
+
+void draw() {
+  background(bg);
+  image(heroe,heroeX,heroeY);
+  //velHeroe++;
+  image(villano,villanoX,villanoY);
+  if(keyPressed){
+    if (key == ENTER) {
+        IntroScreen = false;
+    }
+  }
+  if (IntroScreen == true){
+    image(inicio,0,0,1200,800);
+  }
+  else{
+    stroke(255);
+    textSize(62);
+    fill(0);
+    text(pregunta, 230, 160);
+    textSize(42);
+    text(rT.get(0), 160, 420);//verde
+    text(rT.get(2), 305, 655);//rojo
+    text(rT.get(1), 485, 420);//azul
+  }
+  String colores = puerto.readStringUntil('\n');
+    if (colores != null){
+      float [] valores = float(split(colores, ","));
+      textSize(30);
+      fill(40);
+      text(valores[0],60,120);
+    }
+   serialEvent(puerto);
+  //velVillano++;
+}
+
+void serialEvent (Serial puerto){
+  String colores = puerto.readStringUntil('\n');
+  if(key == ENTER){
+    if(mousePressed){
+      if (colores != null){
+        int [] valores = int(split(colores, ","));
+        if(valores[3] == 1){
+           println("Rojo!!!");
+        }
+        else if(valores[3] == 2){
+          println("Azul!!!");
+        }
+        else if(valores[3] == 3){
+          println("Verde!!!");
+        }
+      }
+     }
+  }
+}
+
+
+void update(){
+  if (preguntas.size() != 0){
+  float i = random(preguntas.size());
+  int ind = (int) i;
+  pregunta = preguntas.get(ind);
+  respuesta = respuestas.get(ind);
+  preguntas.remove(ind);
+  respuestas.remove(ind);
+  float rind = random(4);
+  int ri = (int) rind;
+  rT.set(ri, respuesta);
+  String n;
+  for( int x = 0; x < 4; x++){
+    
+    if( rT.get(x) != respuesta){
+      do {
+      float num = random(20);
+      int nu = (int) num;
+      n = str(nu);
+      }while( n == respuesta);
+      rT.set(x, n);
+    }
+  }
+  }
+  draw();
+}
+
+void mousePressed() {
+  velHeroe+=20;
+  update();
+  
+}
+
+void checarVictoria(){
+    if(heroeY < 100 || villanoY < 100){
+        /* Aquí le pones lo que quieres que haga cuando gane4s, se me
+        olvidó preguntarte que iba a suceder */
+    }
+}
+
+void checarRespuesta (int num){
+    if(rT.get(num) == respuesta){
+        heroeY -= cambioY;
+    }
+    else{
+        if(vCounter){
+            vCounter = false;
+            villanoY -= cambioY;
+        }
+        else {
+            vCounter = true;
+        }
+    }
+    checarVictoria();
+}
