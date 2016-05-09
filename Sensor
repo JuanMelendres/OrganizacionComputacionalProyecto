@@ -3,10 +3,6 @@ const int s1 = 9;
 const int s2 = 12;  
 const int s3 = 11;  
 const int out = 10;   
-// LED pins connected to Arduino
-int redLed = 2;  
-int greenLed = 3;  
-int blueLed = 4;
 // Variables  
 int red = 0;  
 int green = 0;  
@@ -22,9 +18,6 @@ void setup()
   pinMode(s2, OUTPUT);  
   pinMode(s3, OUTPUT);  
   pinMode(out, INPUT);  
-  pinMode(redLed, OUTPUT);  
-  pinMode(greenLed, OUTPUT);  
-  pinMode(blueLed, OUTPUT);  
   digitalWrite(s0, HIGH);  
   digitalWrite(s1, HIGH);
  
@@ -63,7 +56,7 @@ void loop()
   else{
   Serial.println();  
   }
-  //delay(300);     
+  delay(100);     
  }  
     
 void color()  
