@@ -6,20 +6,20 @@ Serial puerto;
 
 String pregunta = "", respuesta = "",posiX = "",posiY = "";
 StringList preguntas,respuestas,posX,posY;
-StringList rT = new StringList("", "", "", "");
+StringList rT = new StringList("", "", "");
 
 int heroeX=775,villanoX=1035;
 int heroeY=650,villanoY=650;
 int cambioY= 162;
-int velHeroe = 0;
 
 PImage inicio;
-PImage bg,heroe,villano;
+PImage bg,heroe,villano,ganaste,perdiste;
 boolean IntroScreen = true;
 boolean vCounter = false;
+boolean EndScreen = false;
 
 void setup() {
-  puerto = new Serial(this,"/dev/tty.usbmodem68", 9600);
+  puerto = new Serial(this,"/dev/tty.usbmodem1411", 9600);
   size(1200, 800);
   inicio=loadImage("Minions3.jpg");
   image(inicio,0,0,1200,800);
@@ -30,6 +30,8 @@ void setup() {
   bg=loadImage("fondo.jpg");
   heroe=loadImage("minion.fw.png");
   villano=loadImage("villano.fw.png");
+  ganaste=loadImage("ganaste.jpg");
+  perdiste=loadImage("perdiste.jpg");
   puerto.bufferUntil('\n');
   smooth();
 }
@@ -37,15 +39,22 @@ void setup() {
 void draw() {
   background(bg);
   image(heroe,heroeX,heroeY);
-  //velHeroe++;
   image(villano,villanoX,villanoY);
-  if(keyPressed){
+  /*if(keyPressed){
     if (key == ENTER) {
         IntroScreen = false;
     }
-  }
-  if (IntroScreen == true){
+  }*/
+  if (IntroScreen){
     image(inicio,0,0,1200,800);
+  }
+  else if(EndScreen){
+    if (villanoY < 150) {
+      image(perdiste,0,0);
+    }
+    else {
+      image(ganaste,0,0);
+    }
   }
   else{
     stroke(255);
@@ -57,15 +66,14 @@ void draw() {
     text(rT.get(2), 305, 655);//rojo
     text(rT.get(1), 485, 420);//azul
   }
-  String colores = puerto.readStringUntil('\n');
+   String colores = puerto.readStringUntil('\n');
     if (colores != null){
       float [] valores = float(split(colores, ","));
       textSize(30);
       fill(40);
       text(valores[0],60,120);
     }
-   serialEvent(puerto);
-  //velVillano++;
+   
 }
 
 void serialEvent (Serial puerto){
@@ -75,13 +83,16 @@ void serialEvent (Serial puerto){
       if (colores != null){
         int [] valores = int(split(colores, ","));
         if(valores[3] == 1){
-           println("Rojo!!!");
+           checarRespuesta(2);
+           println("R");
         }
         else if(valores[3] == 2){
-          println("Azul!!!");
+          checarRespuesta(1);
+          println("B");
         }
         else if(valores[3] == 3){
-          println("Verde!!!");
+          checarRespuesta(0);
+          println("G");
         }
       }
      }
@@ -97,50 +108,60 @@ void update(){
   respuesta = respuestas.get(ind);
   preguntas.remove(ind);
   respuestas.remove(ind);
-  float rind = random(4);
+  float rind = random(3);
   int ri = (int) rind;
   rT.set(ri, respuesta);
   String n;
-  for( int x = 0; x < 4; x++){
+  for( int x = 0; x < 3; x++){
     
     if( rT.get(x) != respuesta){
       do {
       float num = random(20);
       int nu = (int) num;
       n = str(nu);
-      }while( n == respuesta);
+      }while( n == respuesta && rT.hasValue(n));
       rT.set(x, n);
     }
   }
   }
+  println(rT);
   draw();
 }
 
-void mousePressed() {
-  velHeroe+=20;
-  update();
+void keyPressed() {
+    if (key == ENTER) {
+        IntroScreen = false;
+        update();
+    }
+  }
   
+void mousePressed() {
+  serialEvent(puerto);
 }
 
 void checarVictoria(){
-    if(heroeY < 100 || villanoY < 100){
-        /* Aquí le pones lo que quieres que haga cuando gane4s, se me
-        olvidó preguntarte que iba a suceder */
+    if(heroeY < 150 || villanoY < 150){
+        EndScreen = true;
     }
 }
 
 void checarRespuesta (int num){
+    println(rT.get(num));
+    println(respuesta);
     if(rT.get(num) == respuesta){
-        heroeY -= cambioY;
+        heroeY -= 162;
+        println("si");
     }
     else{
+        println("no");
         if(vCounter){
             vCounter = false;
-            villanoY -= cambioY;
+            villanoY -= 162;
         }
         else {
             vCounter = true;
         }
     }
     checarVictoria();
+    update();
 }
